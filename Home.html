@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programmers Day - Celebrate The Code</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the matrix/hacker theme */
+        :root {
+            --primary-color: #0cff0c;
+            /* Bright green */
+            --background-color: #000;
+            --dark-background: #020a02;
+            --glow-color: rgba(12, 255, 12, 0.75);
+        }
+
+        body {
+            color: var(--primary-color);
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+            /* Add a subtle scanline effect to the whole page */
+            position: relative;
+        }
+
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            z-index: 2;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% {
+                opacity: 0.2;
+            }
+
+            20% {
+                opacity: 0.8;
+            }
+
+            40% {
+                opacity: 0.4;
+            }
+
+            60% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        canvas#matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color), 0 0 15px var(--glow-color);
+        }
+
+        .main-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: clamp(2rem, 10vw, 5rem);
+            letter-spacing: 0.2em;
+        }
+
+        .subtitle {
+            font-family: 'VT323', monospace;
+            font-size: clamp(1rem, 5vw, 2rem);
+            letter-spacing: 0.3em;
+        }
+
+        .icon-card {
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+        }
+
+        .icon-card:hover {
+            background: rgba(0, 255, 0, 0.15);
+            border-color: rgba(0, 255, 0, 0.5);
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 0 25px var(--glow-color);
+        }
+
+        .circuit-tree {
+            filter: drop-shadow(0 0 15px var(--glow-color));
+        }
+
+        /* Styles for the detail pages */
+        .page-content {
+            display: none;
+            /* Hidden by default */
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .retro-look {
+            background-color: #0a140a;
+            border: 2px solid var(--primary-color);
+            padding: 1.5rem;
+            font-family: 'VT323', monospace;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* CRT scanline effect for retro look */
+        .retro-look::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0px, rgba(0, 0, 0, 0.2) 1px, transparent 1px, transparent 3px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .back-button {
+            border: 1px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+
+        /* Styles for Gemini API Feature */
+        #gemini-response {
+            white-space: pre-wrap;
+            min-height: 50px;
+            border-left: 2px solid var(--primary-color);
+            padding-left: 1rem;
+            margin-top: 1rem;
+            color: #b0ffb0;
+            /* Lighter green for response */
+        }
+
+        .gemini-input {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            font-family: 'VT323', monospace;
+            padding: 0.5rem 1rem;
+            width: 100%;
+        }
+
+        .gemini-input::placeholder {
+            color: rgba(12, 255, 12, 0.4);
+        }
+
+        .gemini-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+
+        /* Preloader Styles */
+        #preloader.hidden {
+            animation: fadeOut 1s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-black">
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Preloader/Intro Animation -->
+    <div id="preloader" class="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div class="text-center">
+            <span id="preloader-text" class="text-lg md:text-2xl text-glow font-mono whitespace-nowrap"></span><span
+                class="text-lg md:text-2xl text-glow animate-pulse">_</span>
+        </div>
+    </div>
+
+
+    <div id="main-container" class="relative min-h-screen flex flex-col items-center justify-center p-4 md:p-8 z-10">
+
+        <!-- Home Page -->
+        <div id="home" class="page-content w-full max-w-7xl mx-auto text-center" style="display: none;">
+            <header class="mb-8 md:mb-12">
+                <h1 class="main-title text-glow animate-pulse">PROGRAMMERS DAY</h1>
+                <p class="subtitle mt-2">CELEBRATE THE CODE</p>
+            </header>
+
+            <main>
+                <!-- Central Graphic -->
+                <div class="my-8 md:my-10 flex justify-center items-center">
+                    <svg class="circuit-tree w-64 md:w-80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:rgb(12,255,12);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:rgb(4,102,4);stop-opacity:1" />
+                            </linearGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <g fill="none" stroke="url(#grad)" stroke-width="2" filter="url(#glow)">
+                            <!-- Binary 01 -->
+                            <text x="50" y="55" font-family="'Share Tech Mono', monospace" font-size="50"
+                                fill="url(#grad)" stroke="none">0</text>
+                            <text x="110" y="55" font-family="'Share Tech Mono', monospace" font-size="50"
+                                fill="url(#grad)" stroke="none">1</text>
+
+                            <!-- Trunk -->
+                            <path d="M100 60 V 90" />
+                            <!-- Main branches -->
+                            <path d="M100 90 C 80 90, 70 100, 50 110" />
+                            <path d="M100 90 C 120 90, 130 100, 150 110" />
+                            <path d="M100 80 C 90 80, 85 85, 70 95" />
+                            <path d="M100 80 C 110 80, 115 85, 130 95" />
+                            <!-- Finer branches -->
+                            <path d="M50 110 C 40 115, 30 125, 20 130" />
+                            <path d="M50 110 C 60 115, 70 125, 80 130" />
+                            <path d="M150 110 C 140 115, 130 125, 120 130" />
+                            <path d="M150 110 C 160 115, 170 125, 180 130" />
+                            <path d="M70 95 C 60 100, 55 110, 45 115" />
+                            <path d="M130 95 C 140 100, 145 110, 155 115" />
+                        </g>
+                        <!-- End nodes -->
+                        <circle cx="20" cy="130" r="3" fill="var(--primary-color)" />
+                        <circle cx="80" cy="130" r="3" fill="var(--primary-color)" />
+                        <circle cx="120" cy="130" r="3" fill="var(--primary-color)" />
+                        <circle cx="180" cy="130" r="3" fill="var(--primary-color)" />
+                        <circle cx="45" cy="115" r="3" fill="var(--primary-color)" />
+                        <circle cx="155" cy="115" r="3" fill="var(--primary-color)" />
+                    </svg>
+                </div>
+
+                <!-- Technology Icons Grid has been moved to the footer -->
+            </main>
+
+            <footer class="mt-12 md:mt-16 text-center">
+                <!-- Technology Icons Row -->
+                <div id="tech-grid"
+                    class="flex justify-center items-center flex-wrap gap-4 md:gap-5 mb-8 max-w-5xl mx-auto">
+                    <!-- The nav items are generated by JS are placed here -->
+                </div>
+                <p class="subtitle text-glow">...AND MUCH MORE...</p>
+                <p class="font-bold text-lg mt-4 tracking-widest">SEPTEMBER 13</p>
+                <p class="font-bold text-lg mt-1 tracking-widest text-glow animate-pulse">CICADA</p>
+                <div class="mt-6 flex justify-center items-center gap-x-6 gap-y-2 flex-wrap">
+                    <a href="https://www.instagram.com/pirated.me/" target="_blank" rel="noopener noreferrer"
+                        class="text-gray-400 hover:text-primary-color transition-colors duration-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.703.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.942a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.282.24.705.275 1.486.039.843.047 1.096.047 3.232s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.598-.92c-.11-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.232s.008-2.389.046-3.232c.036-.78.166-1.204.275-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.843-.038 1.096-.047 3.232-.047zM8 4.908a3.092 3.092 0 1 0 0 6.184 3.092 3.092 0 0 0 0-6.184zm0 5.068a1.977 1.977 0 1 1 0-3.955 1.977 1.977 0 0 1 0 3.955zM11.846 3.65a1.205 1.205 0 1 0 0 2.41 1.205 1.205 0 0 0 0-2.41z" />
+                        </svg>
+                        @pirated.me
+                    </a>
+                    <a href="https://github.com/PinakDhar" target="_blank" rel="noopener noreferrer"
+                        class="text-gray-400 hover:text-primary-color transition-colors duration-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+                        </svg>
+                        PinakDhar
+                    </a>
+                </div>
+            </footer>
+        </div>
+
+        <!-- Detail Pages Container -->
+        <div id="detail-pages-container" class="w-full max-w-5xl mx-auto">
+            <!-- Content will be injected here by JS -->
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA for the pages ---
+        const techData = {
+            c: {
+                title: 'The Legacy of C',
+                icon: 'C',
+                retro: {
+                    title: 'The Old Era: Bell Labs & UNIX',
+                    content: `In the silicon-scented halls of Bell Labs in the early 1970s, Dennis Ritchie created C. It wasn't born from a marketing plan, but from a practical need: to write the UNIX operating system. Its predecessor, B, was found wanting. C provided low-level memory access, a simple set of keywords, and a clean style. It was fast, efficient, and portable. It became the bedrock upon which much of the digital world was built. Kernels, drivers, utilities... if it was close to the hardware, it was likely written in C. >_`
+                },
+                modern: {
+                    title: 'The Progression: Ubiquitous & Enduring',
+                    content: `Decades later, C's influence is inescapable. It's the lingua franca of embedded systems, powering everything from your microwave to systems in the Mars Rover. The Linux kernel is a testament to C's power. Its concepts influenced countless languages that followed: C++, C#, Java, and Python. While newer languages offer more safety features, C remains the undisputed king for performance-critical tasks where every clock cycle and byte of memory counts.`
+                }
+            },
+            java: {
+                title: 'The Story of Java',
+                icon: '♨',
+                retro: {
+                    title: 'The Old Era: Project Oak & "Write Once, Run Anywhere"',
+                    content: `In 1991, at Sun Microsystems, a team of engineers known as the "Green Team" initiated a project codenamed "Oak". Their goal was a language for digital devices like set-top boxes. The key idea was platform independence. This led to the creation of the Java Virtual Machine (JVM), an abstract computer that could run on any physical machine. The mantra was born: "Write Once, Run Anywhere." When the World Wide Web exploded, Java, with its applets, found its killer application. It brought interactivity to static web pages.`
+                },
+                modern: {
+                    title: 'The Progression: Enterprise, Android & The Cloud',
+                    content: `Java evolved far beyond web applets. It became the dominant language for large-scale enterprise applications, thanks to its robustness, security, and vast ecosystem of libraries and frameworks like Spring. In 2008, Google chose Java as the primary language for Android development, placing it in the hands of billions of mobile users. Today, Java is a powerhouse in cloud computing, big data processing, and scientific applications, proving its architecture was truly built to last.`
+                }
+            },
+            python: {
+                title: 'The Path of Python',
+                icon: '🐍',
+                retro: {
+                    title: 'The Old Era: A Hobby for Christmas Week',
+                    content: `In the late 1980s, Guido van Rossum was looking for a "hobby" programming project that would keep him occupied during the week around Christmas. He started writing an interpreter for a new scripting language, a descendant of ABC that would appeal to Unix/C hackers. He named it Python, inspired by Monty Python's Flying Circus. His focus was on code readability and simplicity, using indentation instead of braces to define blocks. It was a clean, elegant language that was easy to learn.`
+                },
+                modern: {
+                    title: 'The Progression: AI, Data Science & The Web',
+                    content: `Python's simplicity made it a hit in academia and science. This foundation, combined with powerful libraries like NumPy, Pandas, and Scikit-learn, made it the de facto language for data science and machine learning. In web development, frameworks like Django and Flask allow for rapid creation of powerful applications. From scripting simple tasks to building complex neural networks for giants like Google and Netflix, Python's versatility and beginner-friendly nature have made it one of the most popular languages in the world.`
+                }
+            },
+            javascript: {
+                title: 'The Evolution of JavaScript',
+                icon: 'JS',
+                retro: {
+                    title: 'The Old Era: 10 Days in May & The Browser Wars',
+                    content: `In 1995, Brendan Eich at Netscape created the first version of JavaScript in just ten days. It was initially named Mocha, then LiveScript, before being rebranded to JavaScript to capitalize on the popularity of Java. Its purpose was simple: to add a bit of interactivity to web pages. During the "Browser Wars" between Netscape and Microsoft, JS development was chaotic, with competing implementations. It was often seen as a toy language for simple animations and form validation.`
+                },
+                modern: {
+                    title: 'The Progression: Node.js, Frameworks & Full-Stack Dominance',
+                    content: `The standardization of ECMAScript and the creation of powerful JS engines like V8 changed everything. The release of Node.js in 2009 allowed JavaScript to run on servers, breaking it free from the browser. This unlocked full-stack development with a single language. A vibrant ecosystem of frameworks and libraries like React, Angular, and Vue.js emerged, enabling the creation of complex single-page applications. Today, JavaScript is the undisputed language of the web, powering nearly every interactive experience online.`
+                }
+            },
+            ai: {
+                title: 'The Dawn of AI',
+                icon: '🧠',
+                retro: {
+                    title: 'The Old Era: The Turing Test & LISP',
+                    content: `The dream of artificial intelligence is as old as computing itself. In 1950, Alan Turing proposed his famous "Turing Test" as a measure of a machine's ability to exhibit intelligent behavior. The field was formally founded at a workshop at Dartmouth College in 1956. Early AI research was filled with optimism, exploring symbolic reasoning and problem-solving. Languages like LISP were created specifically for AI. However, progress was slow, leading to several "AI winters" where funding and interest dwindled due to unfulfilled promises.`
+                },
+                modern: {
+                    title: 'The Progression: Machine Learning & The Deep Learning Revolution',
+                    content: `The modern era of AI is defined by Machine Learning. Instead of programming explicit rules, we train models on vast amounts of data. The real revolution began with Deep Learning, using neural networks with many layers. This was enabled by three key factors: the availability of massive datasets, powerful GPU hardware for parallel processing, and algorithmic breakthroughs. Today, AI is transforming industries, from natural language processing (like ChatGPT) and computer vision to scientific discovery and autonomous systems.`
+                }
+            }
+        };
+
+        // --- Matrix Background Animation ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const nums = '0123456789';
+        const alphabet = katakana + latin + nums;
+
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const rainDrops = [];
+
+        for (let x = 0; x < columns; x++) {
+            rainDrops[x] = 1;
+        }
+
+        const drawMatrix = () => {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < rainDrops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+
+                if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
+                }
+                rainDrops[i]++;
+            }
+        };
+
+        setInterval(drawMatrix, 33);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // --- Page Navigation & Content Rendering ---
+        const homePage = document.getElementById('home');
+        const detailPagesContainer = document.getElementById('detail-pages-container');
+        const techGrid = document.getElementById('tech-grid');
+
+        function showPage(pageId) {
+            if (pageId === 'home') {
+                homePage.style.display = 'block';
+                detailPagesContainer.style.display = 'none';
+            } else {
+                homePage.style.display = 'none';
+                detailPagesContainer.style.display = 'block';
+                renderDetailPage(pageId);
+            }
+        }
+
+        function renderDetailPage(techId) {
+            const data = techData[techId];
+            if (!data) return;
+
+            detailPagesContainer.innerHTML = `
+                <div id="${techId}-page" class="page-content" style="display: block;">
+                    <header class="text-center mb-8 md:mb-12">
+                        <h2 class="text-4xl md:text-5xl font-bold text-glow">${data.title}</h2>
+                    </header>
+                    <main class="space-y-12">
+                        <section class="retro-look">
+                            <h3 class="text-2xl md:text-3xl mb-4 text-glow">[ ${data.retro.title} ]</h3>
+                            <p id="retro-content-${techId}" class="text-lg md:text-xl leading-relaxed whitespace-pre-wrap"></p>
+                        </section>
+                        <section>
+                            <h3 class="text-2xl md:text-3xl mb-4 text-glow">// ${data.modern.title}</h3>
+                            <p class="text-base md:text-lg leading-relaxed text-gray-300">${data.modern.content}</p>
+                        </section>
+
+                        <!-- ✨ GEMINI API FEATURE START ✨ -->
+                        <section class="retro-look">
+                            <h3 class="text-2xl md:text-3xl mb-4 text-glow">[ Ask the Code Oracle ✨ ]</h3>
+                            <p class="text-lg md:text-xl mb-4">Have a question about ${data.title}? Ask the Oracle below.</p>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="text" id="gemini-prompt-${techId}" class="gemini-input flex-grow text-xl" placeholder="e.g., What are pointers?">
+                                <button id="gemini-button-${techId}" onclick="askGemini('${techId}', '${data.title}')" class="back-button gemini-button px-6 py-3 text-lg">
+                                    &gt; Query Oracle
+                                </button>
+                            </div>
+                            <div id="gemini-response-container-${techId}" class="mt-4">
+                                <p class="text-lg">[ Oracle's Response ]</p>
+                                <div id="gemini-response-${techId}">Awaiting your query...</div>
+                            </div>
+                        </section>
+                        <!-- ✨ GEMINI API FEATURE END ✨ -->
+
+                    </main>
+                    <footer class="text-center mt-12">
+                        <button onclick="showPage('home')" class="back-button px-8 py-3 text-lg">
+                            &lt;-- Back to Grid
+                        </button>
+                    </footer>
+                </div>
+            `;
+
+            // Apply typewriter effect to the retro content
+            const retroContentElement = document.getElementById(`retro-content-${techId}`);
+            if (retroContentElement) {
+                typewriterEffect(retroContentElement, data.retro.content);
+            }
+        }
+
+        function createTechIcons() {
+            let gridHtml = '';
+            for (const key in techData) {
+                gridHtml += `
+                    <div class="icon-card rounded-lg p-3 flex flex-col items-center justify-center w-24 h-24 cursor-pointer" onclick="showPage('${key}')">
+                        <div class="text-3xl font-bold">${techData[key].icon}</div>
+                        <div class="mt-2 text-xs uppercase tracking-widest">${key === 'ai' ? 'AI/ML' : key}</div>
+                    </div>
+                `;
+            }
+            techGrid.innerHTML = gridHtml;
+        }
+
+        // --- Creative Additions: Preloader & Typewriter ---
+        const preloader = document.getElementById('preloader');
+        const preloaderText = document.getElementById('preloader-text');
+        const introMessages = [
+            "INITIALIZING CONNECTION...",
+            "ACCESSING NEURAL NET...",
+            "DECRYPTING DATA STREAMS...",
+            "AUTHENTICATION COMPLETE.",
+            "WELCOME, OPERATOR."
+        ];
+
+        async function runPreloader() {
+            for (let i = 0; i < introMessages.length; i++) {
+                await typeMessage(introMessages[i], preloaderText);
+                await new Promise(resolve => setTimeout(resolve, i === introMessages.length - 1 ? 1000 : 500));
+            }
+
+            preloader.classList.add('hidden');
+            // Allow home page content to be visible after fadeout
+            setTimeout(() => showPage('home'), 500);
+        }
+
+        function typeMessage(message, element) {
+            return new Promise(resolve => {
+                element.textContent = '';
+                let i = 0;
+                const interval = setInterval(() => {
+                    if (i < message.length) {
+                        element.textContent += message.charAt(i);
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 60);
+            });
+        }
+
+        function typewriterEffect(element, text, speed = 15) {
+            if (!element) return;
+            element.textContent = '';
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, speed);
+        }
+
+
+        // --- Gemini API Integration ---
+        async function askGemini(techId, techTitle) {
+            const promptInput = document.getElementById(`gemini-prompt-${techId}`);
+            const question = promptInput.value.trim();
+            const responseContainer = document.getElementById(`gemini-response-${techId}`);
+            const submitButton = document.getElementById(`gemini-button-${techId}`);
+
+            if (!question) {
+                responseContainer.textContent = "Please enter a question before querying the oracle.";
+                return;
+            }
+
+            // Disable button and show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = "Consulting...";
+            responseContainer.textContent = "Connecting to the digital ether...";
+
+            const apiKey = "AIzaSyDbZogrIF1VZgtzQUy9p62gsZFU81qDUnQ"; // Canvas will provide this
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            // We frame the question in the context of the technology for a better response
+            const fullPrompt = `In the context of the programming language/technology "${techTitle}", please provide a concise and clear answer to the following question: "${question}". Assume you are a knowledgeable "Code Oracle" speaking in a slightly archaic, wise tone.`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: fullPrompt }]
+                }]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (text) {
+                    // Use the typewriter effect for the response
+                    typewriterEffect(responseContainer, text, 20);
+                } else {
+                    responseContainer.textContent = "The oracle is silent. The response was unclear.";
+                }
+
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                responseContainer.textContent = "A disturbance was felt in the code stream. Please try again.";
+            } finally {
+                // Re-enable button
+                submitButton.disabled = false;
+                submitButton.innerHTML = "&gt; Query Oracle";
+            }
+        }
+
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            createTechIcons();
+            runPreloader(); // Start the intro animation instead of showing the page directly
+        });
+
+    </script>
+</body>
+
+</html>
